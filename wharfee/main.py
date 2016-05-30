@@ -8,16 +8,17 @@ import click
 import traceback
 
 from types import GeneratorType
-from prompt_toolkit import AbortAction
-from prompt_toolkit import Application
-from prompt_toolkit import CommandLineInterface
+from prompt_toolkit import (AbortAction,
+                            Application,
+                            CommandLineInterface)
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import Always, HasFocus, IsDone
-from prompt_toolkit.layout.processors import \
-    HighlightMatchingBracketProcessor, ConditionalProcessor
-from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.shortcuts import create_default_layout
-from prompt_toolkit.shortcuts import create_eventloop
+from prompt_toolkit.layout.processors import (
+    HighlightMatchingBracketProcessor,
+    ConditionalProcessor
+)
+from prompt_toolkit.buffer import (Buffer, AcceptAction)
+from prompt_toolkit.shortcuts import (create_prompt_layout, create_eventloop)
 from prompt_toolkit.history import FileHistory
 
 from .client import DockerClient
@@ -65,7 +66,7 @@ class WharfeeCli(object):
         log_file = self.config['main']['log_file']
         log_level = self.config['main']['log_level']
         self.logger = create_logger(__name__, log_file, log_level)
-        
+
         # set_completer_options refreshes all by default
         self.handler = DockerClient(
             self.config['main'].as_int('client_timeout'),
@@ -134,13 +135,14 @@ class WharfeeCli(object):
         """
         click.clear()
 
-    def set_completer_options(self, cons=True, runs=True, imgs=True):
+    def set_completer_options(self, cons=True, runs=True, imgs=True, vols=True):
         """
         Set image and container names in Completer.
         Re-read if needed after a command.
         :param cons: boolean: need to refresh containers
         :param runs: boolean: need to refresh running containers
         :param imgs: boolean: need to refresh images
+        :param vols: boolean: need to refresh volumes
         """
 
         if cons:
@@ -181,6 +183,10 @@ class WharfeeCli(object):
                 self.completer.set_images(images)
                 self.completer.set_tagged(tagged)
 
+        if vols:
+            vs = self.handler.volume_ls(quiet=True)
+            self.completer.set_volumes(vs)
+
     def set_fuzzy_match(self, is_fuzzy):
         """
         Setter for fuzzy matching mode
@@ -218,7 +224,8 @@ class WharfeeCli(object):
         """
         self.set_completer_options(self.handler.is_refresh_containers,
                                    self.handler.is_refresh_running,
-                                   self.handler.is_refresh_images)
+                                   self.handler.is_refresh_images,
+                                   self.handler.is_refresh_volumes)
 
     def run_cli(self):
         """
@@ -230,9 +237,8 @@ class WharfeeCli(object):
         history = FileHistory(os.path.expanduser('~/.wharfee-history'))
         toolbar_handler = create_toolbar_handler(self.get_long_options, self.get_fuzzy_match)
 
-        layout = create_default_layout(
+        layout = create_prompt_layout(
             message='wharfee> ',
-            reserve_space_for_menu=True,
             lexer=CommandLexer,
             get_bottom_toolbar_tokens=toolbar_handler,
             extra_input_processors=[
@@ -246,7 +252,8 @@ class WharfeeCli(object):
         cli_buffer = Buffer(
             history=history,
             completer=self.completer,
-            complete_while_typing=Always())
+            complete_while_typing=Always(),
+            accept_action=AcceptAction.RETURN_DOCUMENT)
 
         manager = get_key_manager(
             self.set_long_options,
@@ -260,6 +267,7 @@ class WharfeeCli(object):
             buffer=cli_buffer,
             key_bindings_registry=manager.registry,
             on_exit=AbortAction.RAISE_EXCEPTION,
+            on_abort=AbortAction.RETRY,
             ignore_case=True)
 
         eventloop = create_eventloop()
@@ -270,7 +278,7 @@ class WharfeeCli(object):
 
         while True:
             try:
-                document = self.dcli.run()
+                document = self.dcli.run(True)
                 self.handler.handle_input(document.text)
 
                 if isinstance(self.handler.output, GeneratorType):
@@ -287,6 +295,11 @@ class WharfeeCli(object):
                 if self.handler.after:
                     for line in self.handler.after():
                         click.echo(line)
+
+                if self.handler.exception:
+                    # This was handled, just log it.
+                    self.logger.warning('An error was handled: %r',
+                                        self.handler.exception)
 
                 self.refresh_completions()
 

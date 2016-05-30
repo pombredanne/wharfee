@@ -8,3 +8,5 @@ build/
 dist/
 .DS_Store
 .coverage
+.python-version
+.cache/

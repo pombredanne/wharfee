@@ -5,6 +5,8 @@
 
 A shell for Docker that can do autocompletion and syntax highlighting.
 
+![ps](screenshots/wharfee-demo.gif)
+
 ## Why?
 
 Docker commands have tons of options. They are hard to remember.
@@ -19,7 +21,7 @@ Same goes for image names.
 
 ![rmi](screenshots/rmi-images.png)
 
-There are some handy shortcuts too. What was that command ro remove all dangling images? OMG, what was it? docker rmi $(docker ps --all --quiet)? Oh, there you go:
+There are some handy shortcuts too. What was that command to remove all dangling images? OMG, what was it? docker rmi $(docker ps --all --quiet)? Oh, there you go:
 
 ![rmi-dangling](screenshots/rmi-all-dangling.png)
 
@@ -36,6 +38,20 @@ Wharfee is a Python package hosted on pypi and installed with:
 Alternatively, you can install the latest from github and get all the bugfixes that didn't make it into pypi release yet:
 
     $ pip install git+https://github.com/j-bennet/wharfee.git
+
+## Running
+
+Wharfee is a console application. You run it from terminal by typing the program name into
+the command line:
+
+    $ wharfee
+    
+If you're on Windows, you may be not so familiar with using the terminal. But if you installed
+Docker (Docker Toolbox), you'll have Docker Quickstart Terminal as part of you installation. So,
+just as above, you'll run Docker Quickstart Terminal and type `wharfee` into your command prompt.
+After you hit `Enter`, you'll see wharfee prompt:
+
+    wharfee>
 
 ## What are you using?
 

@@ -12,11 +12,12 @@ setup(
     download_url='http://github.com/j-bennet/wharfee',
     author_email='i[dot]chernyavska[at]gmail[dot]com',
     version=__version__,
+    license='LICENSE.txt',
     install_requires=[
         'six>=1.9.0',
         'pygments>=2.0.2',
-        'prompt-toolkit==0.46',
-        'docker-py>=1.4.0',
+        'prompt_toolkit>=1.0.0,<1.1.0',
+        'docker-py>=1.6.0',
         'tabulate>=0.7.5',
         'click>=4.0',
         'py-pretty>-0.1',
@@ -40,6 +41,7 @@ setup(
     name='wharfee',
     classifiers=[
         'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
         'Operating System :: Unix',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
